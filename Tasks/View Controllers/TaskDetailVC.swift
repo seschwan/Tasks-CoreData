@@ -21,6 +21,8 @@ class TaskDetailVC: UIViewController {
             self.updateViews()
         }
     }
+    
+    var taskController: TaskController!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,9 +48,12 @@ class TaskDetailVC: UIViewController {
             task.name = taskName
             task.priority = priority.rawValue
             task.notes = notes
+            taskController.put(task: task)
             
         } else {
-            let _ = Task(name: taskName, notes: notes)
+            let task = Task(name: taskName, notes: notes, priority: priority)
+            // NEED MORE CODE
+            taskController.put(task: task)
         }
         do {
             let moc = CoreDataStack.shared.mainContext

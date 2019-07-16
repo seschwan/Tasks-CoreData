@@ -38,6 +38,8 @@ class TasksTableVC: UITableViewController, NSFetchedResultsControllerDelegate {
         return frc
     }()
 
+    private let taskController = TaskController()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -46,7 +48,14 @@ class TasksTableVC: UITableViewController, NSFetchedResultsControllerDelegate {
         super.viewWillAppear(animated)
         self.tableView.reloadData()
     }
-
+    @IBAction func refreshControl(_ sender: UIRefreshControl) {
+        self.taskController.fetchTasksFromServer { (_) in
+            DispatchQueue.main.async {
+                self.refreshControl?.endRefreshing()
+            }
+        }
+    }
+    
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -78,6 +87,15 @@ class TasksTableVC: UITableViewController, NSFetchedResultsControllerDelegate {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let task = self.fetchedResultsController.object(at: indexPath)
+            
+
+            taskController.deleteTaskFromServer(task) { (error) in
+                if let error = error {
+                    NSLog("Error deleting task from server: \(error)")
+                    return
+                }
+                
+            }
             let moc = CoreDataStack.shared.mainContext
             moc.delete(task)
             
@@ -141,6 +159,14 @@ class TasksTableVC: UITableViewController, NSFetchedResultsControllerDelegate {
         let detailVC = segue.destination as? TaskDetailVC,
         let indexPath = self.tableView.indexPathForSelectedRow {
             detailVC.task = self.fetchedResultsController.object(at: indexPath)
+            
+            detailVC.taskController = self.taskController
+            
+        }
+        
+        if segue.identifier == "ShowCreateTask",
+            let detailVC = segue.destination as? TaskDetailVC {
+                detailVC.taskController = self.taskController
         }
     }
     
